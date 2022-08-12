@@ -225,11 +225,11 @@ def generate_images():
 	if not os.path.isdir("images"):
 		os.makedirs("images")
 
-	count_images = 10
+	count_images = 1000
 	for i in range(0, count_images):
 		
 		parent_image_dir = str(i % 100)
-		parent_image_dir.zfill(2)
+		parent_image_dir = parent_image_dir.zfill(2)
 		file_name = str(i).zfill(4)
 		
 		parent_image_dir_path = os.path.join("images", parent_image_dir)
