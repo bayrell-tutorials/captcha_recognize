@@ -2,6 +2,7 @@
 
 from genericpath import isdir
 import random, math, os
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 random.seed()
@@ -250,5 +251,79 @@ def generate_images():
 			file.write(image_answer)
 		
 		
-#generate_test_image()
+def convert_image_to_vector(file_path):
+	
+	if not os.path.isfile(file_path):
+		return None
+	
+	vector = None
+	
+	try:
+		image = Image.open(file_path).convert('RGB')
+		vector = np.asarray(image)
+		
+	except Exception:
+		vector = None
+	
+	return vector
+		
+		
+def load_image(parent_image_dir, file_name):
+	
+	image_result_path = os.path.join("images", parent_image_dir, file_name) + ".jpg"
+	image_mask_path = os.path.join("images", parent_image_dir, file_name) + "-mask.jpg"
+	image_answer_path = os.path.join("images", parent_image_dir, file_name) + "-answer.txt"
+	
+	image_answer = ""
+	image_result_vector = convert_image_to_vector(image_result_path)
+	image_mask_vector = convert_image_to_vector(image_mask_path)
+	
+	try:
+		with open(image_answer_path, 'r', encoding='utf-8') as file:
+			image_answer = file.readline()
+	except Exception:
+		image_answer = ""
+	
+	if image_result_vector is None or image_mask_vector is None or image_answer == "":
+		return None
+	
+	return np.array([
+		image_result_vector,
+		image_mask_vector,
+		image_answer
+		#np.array(list(image_answer.encode('utf8')))
+	], dtype=object)
+
+
+def load_dataset():
+	
+	res = None
+	
+	count_images = 2
+	for i in range(0, count_images):
+	
+		parent_image_dir = str(i % 100)
+		parent_image_dir = parent_image_dir.zfill(2)
+		file_name = str(i).zfill(4)	
+		
+		data = load_image(parent_image_dir, file_name)
+		if data is None:
+			continue
+		
+		if res is None:
+			res = np.expand_dims(data, axis=0)
+		else:
+			res = np.append(res, [data], axis=0)
+		
+	return res
+
+
+def save_dataset():
+	dataset = load_dataset()
+	np.save("data", dataset, allow_pickle=True)
+
+
 generate_images()
+save_dataset()
+
+print ("Ok")
