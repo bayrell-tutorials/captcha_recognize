@@ -320,7 +320,7 @@ def load_dataset():
 
 def save_dataset():
 	dataset = load_dataset()
-	np.save("data", dataset, allow_pickle=True)
+	np.save("captcha_dataset", dataset, allow_pickle=True)
 
 
 generate_images()
