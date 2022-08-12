@@ -295,35 +295,37 @@ def load_image(parent_image_dir, file_name):
 	], dtype=object)
 
 
-def load_dataset():
+def save_dataset():
 	
-	res = None
+	from zipfile import ZipFile
+	zip_file = ZipFile('captcha_dataset.zip', 'w')
 	
-	count_images = 2
+	count_images = 1000
 	for i in range(0, count_images):
 	
 		parent_image_dir = str(i % 100)
 		parent_image_dir = parent_image_dir.zfill(2)
 		file_name = str(i).zfill(4)	
 		
-		data = load_image(parent_image_dir, file_name)
-		if data is None:
-			continue
+		image_result_path = os.path.join("images", parent_image_dir, file_name) + ".jpg"
+		image_mask_path = os.path.join("images", parent_image_dir, file_name) + "-mask.jpg"
+		image_answer_path = os.path.join("images", parent_image_dir, file_name) + "-answer.txt"
+	
+		zip_result_path = os.path.join(parent_image_dir, file_name) + ".jpg"
+		zip_mask_path = os.path.join(parent_image_dir, file_name) + "-mask.jpg"
+		zip_answer_path = os.path.join(parent_image_dir, file_name) + "-answer.txt"
 		
-		if res is None:
-			res = np.expand_dims(data, axis=0)
-		else:
-			res = np.append(res, [data], axis=0)
+		zip_file.write(image_result_path, zip_result_path)
+		zip_file.write(image_mask_path, zip_mask_path)
+		zip_file.write(image_answer_path, zip_answer_path)
 		
-	return res
+	zip_file.close()
+	
+	return zip_file
 
 
-def save_dataset():
-	dataset = load_dataset()
-	np.save("captcha_dataset", dataset, allow_pickle=True)
 
-
-generate_images()
+#generate_images()
 save_dataset()
 
 print ("Ok")
