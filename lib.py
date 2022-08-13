@@ -85,6 +85,27 @@ def load_image_as_vector(file_path):
 	return image_vector
 	
 	
+"""
+	Изменение размеров холста картинки
+"""
+def image_resize_canvas(image, width, height):
+	
+	pixels = image.load()
+	
+	image_new = Image.new('RGB', (width, height), color = pixels[0, 0])
+	draw = ImageDraw.Draw(image_new)
+	
+	position = (
+		math.ceil((width - image.size[0]) / 2),
+		math.ceil((height - image.size[1]) / 2),
+	)
+	
+	image_new.paste(image, position)
+	
+	del pixels, draw, image
+	
+	return image_new
+
 
 class DataSet:
 	
@@ -283,6 +304,7 @@ class DataSet:
 		
 		captcha = Captcha()
 		captcha.generate()
+		captcha.resize_max()
 		
 		self.save_captcha(photo_number, captcha)
 		
@@ -296,8 +318,11 @@ class Captcha:
 		self.mask = None
 		self.answer = None
 		self.words = None
-		self.image_width = random.randint(300, 400)
-		self.image_height = random.randint(90, 150)
+		self.image = None
+		self.image_width_max = 400
+		self.image_height_max = 150
+		self.image_width = random.randint(300, self.image_width_max)
+		self.image_height = random.randint(90, self.image_height_max)
 		self.text_count = random.randint(4, 6)
 		self.dots_count = random.randint(10, 20)
 		self.lines_count = random.randint(2, 3)
@@ -340,15 +365,26 @@ class Captcha:
 		image_mask = self.mask.copy()
 		image_mask_draw = ImageDraw.Draw(image_mask)
 		
+		image_center = (
+			math.ceil(image_mask.size[0] / 2),
+			math.ceil(image_mask.size[1] / 2)
+		)
+		
 		for word in self.words:
-			word_box = word["box"]
+			text_box = word["box"]
+			
+			text_box = (
+				text_box[0] + image_center[0],
+				text_box[1] + image_center[1],
+				text_box[2], text_box[3]
+			)
 			
 			image_mask_draw.rectangle(
 				(
-					word_box[0] - 2,
-					word_box[1] - 2,
-					word_box[0] + word_box[2] + 2,
-					word_box[1] + word_box[3] + 2
+					text_box[0] - 1,
+					text_box[1] - 1,
+					text_box[0] + text_box[2] + 1,
+					text_box[1] + text_box[3] + 1
 				),
 				outline="green",
 				width=2
@@ -562,9 +598,14 @@ class Captcha:
 			(51,204,204),
 		]
 		
-		color = colors[ random.randint(0, len(colors) - 1) ]
-		image_result, draw_result = self.create_image( color )
+		self.image_color = colors[ random.randint(0, len(colors) - 1) ]
+		image_result, draw_result = self.create_image( self.image_color )
 		image_mask, draw_mask = self.create_image("white")
+		
+		image_center = (
+			math.ceil(self.image_width / 2),
+			math.ceil(self.image_height / 2)
+		)
 		
 		text_answer = ""
 		step_text = self.image_width / self.text_count
@@ -599,6 +640,12 @@ class Captcha:
 				image_result=image_result
 			)
 			
+			text_box = (
+				text_box[0] - image_center[0],
+				text_box[1] - image_center[1],
+				text_box[2], text_box[3]
+			)
+			#print(text_box)
 			image_words.append({
 				"box": text_box,
 				"text": text,
@@ -640,4 +687,11 @@ class Captcha:
 		self.answer = text_answer
 		self.words = image_words
 		
+
+	def resize_max(self):
 		
+		self.image = image_resize_canvas(self.image, self.image_width_max, self.image_height_max)
+		self.mask = image_resize_canvas(self.mask, self.image_width_max, self.image_height_max)
+		
+		pass
+

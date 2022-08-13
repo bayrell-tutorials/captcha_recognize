@@ -36,6 +36,7 @@ def generate_captcha_and_show():
 	#plt.show()
 
 	captcha.generate()
+	captcha.resize_max()
 
 	captcha.show()
 
