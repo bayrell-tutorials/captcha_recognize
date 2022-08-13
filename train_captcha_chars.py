@@ -13,6 +13,7 @@ from lib import *
 from sklearn.model_selection import train_test_split
 
 model_name = "model_chars"
+train_number = 2
 dataset_path = "data/captcha_dataset.zip"
 
 random.seed()
@@ -84,13 +85,14 @@ def get_train_dataset2(count=1000):
 """
 	Создание модели
 """
-def create_model(input_shape, output_shape):
+def create_model(input_shape, output_shape, train_number):
 	
 	from tensorflow.keras.models import Sequential
 	from tensorflow.keras.layers import Dense, Input, Flatten, \
 		Dropout, Conv2D, MaxPooling2D, Reshape
 	
-	model = Sequential(name=model_name)
+	model_train_name = model_name + "_" + str(train_number)
+	model = Sequential(name=model_train_name)
 	
 	input_shape = input_shape[1:]
 	output_shape = output_shape[1]
@@ -102,19 +104,23 @@ def create_model(input_shape, output_shape):
 	model.add(Reshape( target_shape=(input_shape[0], input_shape[1], 1) ))
 	
 	# Сверточный слой
+	model.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
+	model.add(MaxPooling2D(pool_size=(2, 2)))
+	
+	# Сверточный слой
 	model.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 	
 	# Сверточный слой
-	model.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
-	model.add(MaxPooling2D(pool_size=(2, 2)))
+	#model.add(Conv2D(32, kernel_size=(3, 3), padding="same", activation="relu"))
+	#model.add(MaxPooling2D(pool_size=(2, 2)))
 	
 	# Выравнивающий слой
 	model.add(Flatten())
 	
 	# Полносвязные слои
-	model.add(Dense(512, activation='relu'))
-	model.add(Dropout(0.5))
+	#model.add(Dense(256, activation='relu'))
+	#model.add(Dropout(0.5))
 	
 	model.add(Dense(128, activation='relu'))
 	model.add(Dropout(0.5))
@@ -131,10 +137,16 @@ def create_model(input_shape, output_shape):
 	# Вывод на экран информация о модели
 	model.summary()
 	
+	file_name = "data/" + model_train_name + "_plot.png"
+	
 	keras.utils.plot_model(
 		model,
-		to_file="data/" + model_name + "_plot.png",
+		to_file=file_name,
 		show_shapes=True)
+	
+	#img = pltimg.imread(file_name)
+	#plt.imshow(img)
+	#plt.show()
 	
 	return model
 	
@@ -142,9 +154,25 @@ def create_model(input_shape, output_shape):
 """
 	Обучение модели
 """
-def train_model(model, train_x, train_y, test_x, test_y):
+def train_model(model, train_x, train_y, test_x, test_y, train_number=1):
+	
+	model_train_name = model_name + "_" + str(train_number)
+	checkpoint_path = "data/"  + model_name + "/training_" + str(train_number) + "/cp.ckpt"
+	checkpoint_dir = os.path.dirname(checkpoint_path)
+	
+	# Создаем папку, куда будут сохраняться веса во время обучения
+	if not os.path.isdir(checkpoint_dir):
+		os.makedirs(checkpoint_dir)
+	
+	# Callback функия для сохранения весов
+	cp_callback = keras.callbacks.ModelCheckpoint(
+		filepath=checkpoint_path,
+		save_weights_only=True,
+		verbose=1
+	)
 	
 	history = model.fit(
+		
 		# Входные данные
 		train_x,
 		
@@ -155,16 +183,22 @@ def train_model(model, train_x, train_y, test_x, test_y):
 		batch_size=128,
 		
 		# Количество эпох обучения
-		epochs=50,
+		epochs=30,
 		
 		# Контрольные данные
 		validation_data=(test_x, test_y),
 		
 		# Подробный вывод
-		verbose=1) 
+		verbose=1,
+		
+		# Сохраняем контрольные точки
+		callbacks=[cp_callback]
+	) 
 	
 	# Сохраняем модель на диск
 	model.save('data/' + model_name)
+	model.save('data/' + model_name + ".h5")
+	model.save('data/' + model_train_name + ".h5")
 	
 	total_val_accuracy = math.ceil(history.history['val_accuracy'][-1] * 100)
 	
@@ -176,33 +210,54 @@ def train_model(model, train_x, train_y, test_x, test_y):
 	plt.ylabel('Процент')
 	plt.xlabel('Эпоха')
 	plt.legend()
-	plt.savefig('data/' + model_name + '_history.png')
+	plt.savefig('data/' + model_train_name + '_history.png')
 	plt.show()
 	
 	return history
 	
 
-def do_train():
+def do_train(train_number = 1):
+	
 	res = get_train_dataset()
 	
 	print ("Shape question:", res[0].shape)
 	print ("Shape answer:", res[1].shape)
 	
-	model = create_model(res[0].shape, res[1].shape)
+	model = create_model(res[0].shape, res[1].shape, train_number)
 
 	train_x, test_x, train_y, test_y = train_test_split(res[0], res[1])
 
 	print("Train", train_x.shape, "=>", train_y.shape)
 	print("Test", test_x.shape, "=>", test_y.shape)
 
-	train_model(model, train_x, train_y, test_x, test_y)
+	train_model(model, train_x, train_y, test_x, test_y, train_number)
 
 
+def show_train_model(train_number):
+	
+	model_train_name = model_name + "_" + str(train_number)
+	model = keras.models.load_model('data/' + model_train_name + '.h5')
+	
+	# Вывод на экран информация о модели
+	model.summary()
+	
+	file_name = "data/" + model_train_name + "_plot.png"
+	
+	keras.utils.plot_model(
+		model,
+		to_file=file_name,
+		show_shapes=True
+	)
+	
+	
 def do_check(count=10000):
 	
 	dataset = DataSet()
 	dataset.open(dataset_path)
-	model = keras.models.load_model('data/' + model_name)
+	
+	model_train_name = model_name + "_" + str(train_number)
+	#model = keras.models.load_model('data/' + model_name)
+	model = keras.models.load_model('data/' + model_train_name + '.h5')
 	
 	res_question = None
 	
@@ -253,10 +308,13 @@ def do_check(count=10000):
 		answer_value = get_answer_from_vector(answer_vector)
 		
 		if answer_value != control_value:
-			#print (DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value])
+			
+			title = DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value]
+			print (title)
 		
 			image = res_question[i]
 			
+			#plt.title(title)
 			#plt.imshow(image, cmap='gray')
 			#plt.show()
 			
@@ -272,6 +330,7 @@ def do_check(count=10000):
 	pass
 
 
-#do_train()
-do_check()
+#do_train(train_number)
+do_check(1000)
 
+#show_train_model(1)

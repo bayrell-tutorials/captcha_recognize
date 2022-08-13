@@ -9,6 +9,7 @@ from cgitb import text
 import io, os, random, math, zipfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as pltimg
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 # Constant
