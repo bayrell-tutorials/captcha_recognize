@@ -6,7 +6,7 @@
 ##
 
 from cgitb import text
-import io, os, random, math, zipfile, shutil
+import io, os, random, math, zipfile, shutil, json
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -52,7 +52,7 @@ def convert_image_to_vector(image_bytes, is_rgb=True):
 			image = image_bytes
 	
 	except Exception:
-		pass
+		image = None
 	
 	if image is None:
 		return None
@@ -85,26 +85,6 @@ def load_image_as_vector(file_path):
 	return image_vector
 	
 	
-"""
-	Возвращает путь к картинке
-"""
-def get_captcha_image_path(photo_number):
-	
-	parent_image_dir = str(photo_number % 100)
-	parent_image_dir = parent_image_dir.zfill(2)
-	file_name = str(photo_number)
-	
-	image_result_path = os.path.join("captcha", parent_image_dir, file_name) + ".png"
-	image_mask_path = os.path.join("captcha", parent_image_dir, file_name) + "-mask.png"
-	image_json_path = os.path.join("captcha", parent_image_dir, file_name) + "-json.txt"
-	
-	return {
-		"dir": os.path.join("captcha", parent_image_dir),
-		"image": image_result_path,
-		"mask": image_mask_path,
-		"json": image_json_path,
-	}
-
 
 class DataSet:
 	
@@ -140,9 +120,9 @@ class DataSet:
 	
 	
 	"""
-		Завершает работу с временным файлом zip архив
+		Пересоздает оригинальный zip файл с изменениями
 	"""
-	def close_tmp_write(self):
+	def flush(self):
 		
 		if self.zip_file_tmp is not None:
 			for file_name in self.zip_file_namelist:
@@ -167,7 +147,7 @@ class DataSet:
 		Завершает работу с архивом
 	"""
 	def close(self):
-		self.close_tmp_write()
+		self.flush()
 		
 		if self.zip_file_tmp is not None:
 			self.zip_file.close()
@@ -202,7 +182,7 @@ class DataSet:
 			
 			index = indexOf(self.zip_file_tmp_namelist, file_name)
 			if index != -1:
-				self.close_tmp_write()
+				self.flush()
 				
 			self.open_tpm_write()
 			self.zip_file_tmp.writestr(file_name, data)
@@ -233,49 +213,49 @@ class DataSet:
 	
 	
 	"""
-		Загружает картинку капчи из zip файла
+		Возвращает путь к картинке
 	"""
-	def get_captcha_image(self, photo_number):
+	def get_captcha_path(self, photo_number):
 		
-		path = get_captcha_image_path(photo_number)
+		parent_image_dir = str(photo_number % 100)
+		parent_image_dir = parent_image_dir.zfill(2)
+		file_name = str(photo_number)
 		
-		image_result = None
-		image_mask = None
-		image_answer = None
+		image_result_path = os.path.join("captcha", parent_image_dir, file_name) + ".png"
+		image_mask_path = os.path.join("captcha", parent_image_dir, file_name) + "-mask.png"
+		image_json_path = os.path.join("captcha", parent_image_dir, file_name) + "-json.txt"
 		
-		try:
-			image_result = self.zip_file.read(path["image"])
-			image_mask = self.zip_file.read(path["mask"])
-			image_answer = self.zip_file.read(path["anwer"])
-			image_answer = image_answer.decode("utf-8")
-			
-		except Exception:
-			pass
-		
-		return image_result, image_mask, image_answer
-		
+		return {
+			"dir": os.path.join("captcha", parent_image_dir),
+			"image": image_result_path,
+			"mask": image_mask_path,
+			"json": image_json_path,
+		}
+	
 	
 	"""
-		Показать капча картинку из датасета
+		Загружает картинку капчи из zip файла
 	"""
-	def extract_captcha_image_and_show(self, photo_number):
-		image_result, image_mask, image_answer = self.get_captcha_image(photo_number)
-
-		image_result = convert_image_to_vector(image_result)
-		image_mask = convert_image_to_vector(image_mask, False)
+	def get_captcha(self, photo_number):
 		
-		if image_result is None or image_mask is None:
-			return
+		captcha = None
+		path = self.get_captcha_path(photo_number)
 		
-		print (image_answer)
-		print (image_result.shape)
-		print (image_mask.shape)
-
-		plt.imshow(image_result, cmap='gray')
-		plt.show()
-
-		plt.imshow(image_mask, cmap='gray')
-		plt.show()
+		try:
+			captcha = Captcha()
+			captcha.image = self.zip_file.read(path["image"])
+			captcha.mask = self.zip_file.read(path["mask"])
+			image_json = self.zip_file.read(path["json"])
+			image_json = image_json.decode("utf-8")
+			captcha.load_json(image_json)
+			
+			if not captcha.is_load():
+				captcha = None
+			
+		except Exception:
+			captcha = None
+		
+		return captcha
 	
 	
 	"""
@@ -283,11 +263,11 @@ class DataSet:
 	"""
 	def save_captcha(self, photo_number, captcha):
 		
-		path = get_captcha_image_path(photo_number)
+		path = self.get_captcha_path(photo_number)
 		
 		self.save_file(path["image"], captcha.image)
 		self.save_file(path["mask"], captcha.mask)
-		#self.save_file(path["anwer"], image_answer)
+		self.save_file(path["json"], captcha.get_json())
 		
 	
 	"""
@@ -297,11 +277,9 @@ class DataSet:
 		
 		# Проверка есть ли такой уже файл
 		if not force:
-			image_result, image_mask, image_answer = self.get_captcha_image(photo_number)
-			if image_result is not None and image_mask is not None and image_answer is not None:
+			captcha = self.get_captcha(photo_number)
+			if captcha is not None:
 				return
-		
-		path = get_captcha_image_path(photo_number)
 		
 		captcha = Captcha()
 		captcha.generate()
@@ -323,6 +301,35 @@ class Captcha:
 		self.text_count = random.randint(4, 6)
 		self.dots_count = random.randint(10, 20)
 		self.lines_count = random.randint(2, 3)
+	
+	
+	def is_load(self):
+		return (
+			self.image is not None and
+			self.mask is not None and
+			self.answer is not None and
+			self.words is not None
+		)
+	
+	
+	def load_json(self, json_string):
+		try:
+			obj = json.loads(json_string)
+			self.answer = obj["answer"]
+			self.words = obj["words"]
+		except Exception:
+			self.answer = None
+			self.words = None
+	
+	
+	def get_json(self):
+		obj = {
+			"answer": self.answer,
+			"words": self.words,
+		}
+		
+		json_string = json.dumps(obj)
+		return json_string
 	
 	
 	def show(self):

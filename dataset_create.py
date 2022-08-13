@@ -9,15 +9,15 @@
 from lib import *
 
 
-def generate_dataset():
+def generate_captcha_dataset():
 
 	dataset = DataSet()
 	dataset.open("data/captcha_dataset.zip")
 
-	count_images = 100
+	count_images = 1000
 	for i in range(0, count_images):
 		print (i)
-		dataset.generate_captcha(i, force=True)
+		dataset.generate_captcha(i, force=False)
 
 	dataset.close()
 
@@ -41,5 +41,17 @@ def generate_captcha_and_show():
 
 
 
-generate_dataset()
+def dataset_test():
+	
+	dataset = DataSet()
+	dataset.open("data/captcha_dataset.zip")
+	
+	captcha = dataset.get_captcha(1)
+	print (captcha)
+	
+	dataset.close();
+
+
+generate_captcha_dataset()
 #generate_captcha_and_show()
+#dataset_test()
