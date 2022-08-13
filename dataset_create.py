@@ -31,12 +31,14 @@ def generate_captcha_symbols():
 	text_str_count = len(text_str)
 	
 	angles = [
-		-45
+		-45,
+		-35,
 		-25,
 		-10,
 		0,
 		10,
 		25,
+		35,
 		45
 	];
 	

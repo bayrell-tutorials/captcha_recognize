@@ -13,6 +13,7 @@ from lib import *
 from sklearn.model_selection import train_test_split
 
 model_name = "model_chars"
+dataset_path = "data/captcha_dataset.zip"
 
 random.seed()
 
@@ -25,7 +26,7 @@ def get_train_dataset():
 	res_answer = None
 
 	dataset = DataSet()
-	dataset.open("data/captcha_dataset.zip")
+	dataset.open(dataset_path)
 	
 	for char_number in range(0, DATASET_CHARS_COUNT):
 		
@@ -101,18 +102,20 @@ def create_model(input_shape, output_shape):
 	model.add(Reshape( target_shape=(input_shape[0], input_shape[1], 1) ))
 	
 	# Сверточный слой
-	model.add(Conv2D(32, kernel_size=(3, 3), padding="same", activation="relu"))
+	model.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 	
 	# Сверточный слой
-	model.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))
-	#model.add(MaxPooling2D(pool_size=(2, 2)))
+	model.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
+	model.add(MaxPooling2D(pool_size=(2, 2)))
 	
 	# Выравнивающий слой
 	model.add(Flatten())
 	
 	# Полносвязные слои
-	#model.add(Dense(512, activation='relu'))
+	model.add(Dense(512, activation='relu'))
+	model.add(Dropout(0.5))
+	
 	model.add(Dense(128, activation='relu'))
 	model.add(Dropout(0.5))
 	
@@ -195,10 +198,10 @@ def do_train():
 	train_model(model, train_x, train_y, test_x, test_y)
 
 
-def do_check(count=20):
+def do_check(count=10000):
 	
 	dataset = DataSet()
-	dataset.open("data/captcha_dataset.zip")
+	dataset.open(dataset_path)
 	model = keras.models.load_model('data/' + model_name)
 	
 	res_question = None
@@ -249,16 +252,22 @@ def do_check(count=20):
 		answer_vector = res_answer[i]
 		answer_value = get_answer_from_vector(answer_vector)
 		
-		#image = res_question[i]
+		if answer_value != control_value:
+			#print (DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value])
 		
-		print (DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value])
+			image = res_question[i]
+			
+			#plt.imshow(image, cmap='gray')
+			#plt.show()
+			
 		
 		if control_value == answer_value:
 			correct_answers = correct_answers + 1
 		pass
 	
-	
+	rate = math.ceil(correct_answers / res_answer_count * 100)
 	print ("Correct answers: " + str(correct_answers) + " of " + str(res_answer_count))
+	print ("Rate: " + str(rate) + "%")
 	
 	pass
 
