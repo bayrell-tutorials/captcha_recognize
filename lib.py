@@ -92,7 +92,7 @@ def image_resize_canvas(image, width, height):
 	
 	pixels = image.load()
 	
-	image_new = Image.new('RGB', (width, height), color = pixels[0, 0])
+	image_new = Image.new(image.mode, (width, height), color = pixels[0, 0])
 	draw = ImageDraw.Draw(image_new)
 	
 	position = (
@@ -105,6 +105,95 @@ def image_resize_canvas(image, width, height):
 	del pixels, draw, image
 	
 	return image_new
+
+
+def image_get_symbol_box(image):
+	
+	pixels = image.load()
+	
+	def find_bound(start_pos, direction_x=True, find_start=True):
+		
+		if direction_x:
+		
+			for x in range(start_pos, image.size[0]):
+				
+				count_dot = 0
+				for y in range(0, image.size[1]):
+					
+					color = pixels[x, y]
+					if color < 200:
+						count_dot = count_dot + 1
+				
+				if find_start:
+					if count_dot >= 1:
+						return x
+				else:
+					if count_dot < 1:
+						return x
+					
+		else:
+			
+			for y in range(start_pos, image.size[1]):
+				
+				count_dot = 0
+				for x in range(0, image.size[0]):
+					
+					color = pixels[x, y]
+					if color < 200:
+						count_dot = count_dot + 1
+				
+				if find_start:
+					if count_dot >= 1:
+						return y
+				else:
+					if count_dot < 1:
+						return y
+		
+		return -1
+		
+	
+	left = find_bound(0, direction_x=True, find_start=True)
+	right = find_bound(left + 1, direction_x=True, find_start=False)
+	
+	top = find_bound(0, direction_x=False, find_start=True)
+	bottom = find_bound(top + 1, direction_x=False, find_start=False)
+	
+	if ((left == -1) or
+		(right == -1) or
+		(top == -1) or
+		(bottom == -1)
+	):
+		return None
+	
+	del pixels
+	
+	left = left - 1
+	top = top - 1
+	right = right + 1
+	bottom = bottom + 1
+	
+	if right < left: right = image.size[0] - 1
+	if bottom < top: bottom = image.size[1] - 1
+	
+	if left < 0: left = 0
+	if top < 0: top = 0
+	if right >= image.size[0]: right = image.size[0] - 1
+	if bottom >= image.size[1]: bottom = image.size[1] - 1
+	
+	return (left, top, right, bottom)
+
+
+def image_symbol_normalize(image, width=32, height=32):
+	
+	box = image_get_symbol_box(image)
+	
+	if box is None:
+		return None
+		
+	image = image.crop( box )
+	image = image_resize_canvas(image, width, height)
+	
+	return image
 
 
 class DataSet:
@@ -286,9 +375,11 @@ class DataSet:
 		
 		path = self.get_captcha_path(photo_number)
 		
-		self.save_file(path["image"], captcha.image)
-		self.save_file(path["mask"], captcha.mask)
+		self.save_file(path["image"], image)
+		self.save_file(path["mask"], mask)
 		self.save_file(path["json"], captcha.get_json())
+		
+		del image, mask
 		
 	
 	"""
@@ -362,7 +453,8 @@ class Captcha:
 		if self.image is None or self.mask is None:
 			return
 		
-		image_mask = self.mask.copy()
+		image = self.image.copy()
+		image_mask = self.mask.convert("RGB")
 		image_mask_draw = ImageDraw.Draw(image_mask)
 		
 		image_center = (
@@ -395,13 +487,16 @@ class Captcha:
 		rows = 2
 		columns = 1
 		
+		#image_mask = self.mask.copy()
+		#image_mask = self.mask.convert("1")
+		
 		fig = plt.figure()
 		
 		fig.add_subplot(rows, columns, 1)
-		plt.imshow(self.image, cmap='gray')
+		plt.imshow(image, cmap='gray')
 		plt.title(
 			"Size: " +
-			str(self.image.size[0]) + "x" + str(self.image.size[1]) +
+			str(image.size[0]) + "x" + str(image.size[1]) +
 			". Answer: " + self.answer.upper())
 		
 		fig.add_subplot(rows, columns, 2)
@@ -409,6 +504,8 @@ class Captcha:
 		
 		plt.savefig("tmp/captcha.png")
 		plt.show()
+		
+		del image, image_mask
 	
 	
 	def get_font(self, size=28, number=-1):
@@ -431,8 +528,8 @@ class Captcha:
 		return font
 	
 	
-	def create_image(self, color):
-		img = Image.new('RGB', (self.image_width, self.image_height), color = color)
+	def create_image(self, mode="RGB", color="white"):
+		img = Image.new(mode, (self.image_width, self.image_height), color = color)
 		draw = ImageDraw.Draw(img)
 		return (img, draw)
 	
@@ -599,8 +696,8 @@ class Captcha:
 		]
 		
 		self.image_color = colors[ random.randint(0, len(colors) - 1) ]
-		image_result, draw_result = self.create_image( self.image_color )
-		image_mask, draw_mask = self.create_image("white")
+		image_result, draw_result = self.create_image( mode="RGB", color=self.image_color )
+		image_mask, draw_mask = self.create_image(mode="L", color="white")
 		
 		image_center = (
 			math.ceil(self.image_width / 2),
