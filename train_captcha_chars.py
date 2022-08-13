@@ -6,14 +6,37 @@
 # License: MIT
 ##
 
+import os
+
+#os.environ["TF_GPU_ALLOCATOR"]="cuda_malloc_async"
+#os.environ["TF_CPP_VMODULE"]="gpu_process_state=10,gpu_cudamallocasync_allocator=10"
+
 import math, random
+import tensorflow as tf
 import tensorflow.keras as keras
 
 from lib import *
 from sklearn.model_selection import train_test_split
 
+#config = tf.ConfigProto()
+#session = tf.Session(config=config)
+
+#config = tf.compat.v1.ConfigProto(
+#	gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.2)
+#)
+#config.gpu_options.allow_growth = True
+#session = tf.compat.v1.Session(config=config)
+#tf.compat.v1.keras.backend.set_session(session)
+
+gpus = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
+tf.config.experimental.set_virtual_device_configuration(
+    gpus[0],
+    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024)])
+logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+
 model_name = "model_chars"
-train_number = 3
+train_number = 4
 dataset_path = "data/captcha_dataset.zip"
 model_train_name = model_name + "_" + str(train_number)
 
@@ -330,7 +353,7 @@ def do_check(count=10000):
 	pass
 
 
-#do_train(train_number)
-do_check(1000)
+do_train(train_number)
+#do_check(1000)
 
 #show_train_model(1)
