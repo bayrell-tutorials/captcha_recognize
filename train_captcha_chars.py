@@ -12,7 +12,7 @@ import tensorflow.keras as keras
 from lib import *
 from sklearn.model_selection import train_test_split
 
-model_name = "model_words"
+model_name = "model_chars"
 
 random.seed()
 

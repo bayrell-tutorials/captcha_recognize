@@ -21,10 +21,10 @@
 			"justMyCode": true
 		},
 		{
-			"name": "train_captcha_words",
+			"name": "train_captcha_chars",
 			"type": "python",
 			"request": "launch",
-			"program": "${workspaceFolder}/train_captcha_words.py",
+			"program": "${workspaceFolder}/train_captcha_chars.py",
 			"console": "integratedTerminal",
 			"justMyCode": true
 		},
