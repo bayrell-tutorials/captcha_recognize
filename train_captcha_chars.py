@@ -13,8 +13,11 @@ from lib import *
 from sklearn.model_selection import train_test_split
 
 model_name = "model_chars"
-train_number = 2
+train_number = 3
 dataset_path = "data/captcha_dataset.zip"
+model_train_name = model_name + "_" + str(train_number)
+
+print ( model_train_name )
 
 random.seed()
 
@@ -122,7 +125,7 @@ def create_model(input_shape, output_shape, train_number):
 	#model.add(Dense(256, activation='relu'))
 	#model.add(Dropout(0.5))
 	
-	model.add(Dense(128, activation='relu'))
+	model.add(Dense(512, activation='relu'))
 	model.add(Dropout(0.5))
 	
 	# Выходной слой
@@ -156,7 +159,6 @@ def create_model(input_shape, output_shape, train_number):
 """
 def train_model(model, train_x, train_y, test_x, test_y, train_number=1):
 	
-	model_train_name = model_name + "_" + str(train_number)
 	checkpoint_path = "data/"  + model_name + "/training_" + str(train_number) + "/cp.ckpt"
 	checkpoint_dir = os.path.dirname(checkpoint_path)
 	
@@ -180,10 +182,10 @@ def train_model(model, train_x, train_y, test_x, test_y, train_number=1):
 		train_y,
 		
 		# Размер партии для обучения
-		batch_size=128,
+		batch_size=512,
 		
 		# Количество эпох обучения
-		epochs=30,
+		epochs=20,
 		
 		# Контрольные данные
 		validation_data=(test_x, test_y),
@@ -235,7 +237,6 @@ def do_train(train_number = 1):
 
 def show_train_model(train_number):
 	
-	model_train_name = model_name + "_" + str(train_number)
 	model = keras.models.load_model('data/' + model_train_name + '.h5')
 	
 	# Вывод на экран информация о модели
@@ -255,7 +256,6 @@ def do_check(count=10000):
 	dataset = DataSet()
 	dataset.open(dataset_path)
 	
-	model_train_name = model_name + "_" + str(train_number)
 	#model = keras.models.load_model('data/' + model_name)
 	model = keras.models.load_model('data/' + model_train_name + '.h5')
 	
