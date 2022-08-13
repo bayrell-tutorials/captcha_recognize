@@ -11,10 +11,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
+# Constant
+DATASET_CHARS = "1234567890QWERTYUIOPASDFGHJKLZXCVBNM"
+DATASET_CHARS_COUNT = len(DATASET_CHARS)
+
 
 # Random seed
 random.seed()
 
+
+"""
+	Кодирование символа
+"""
+def dataset_number_to_symbol(char_number):
+	return DATASET_CHARS[ char_number % DATASET_CHARS_COUNT ]
+	
 
 """
 	Математическая функция Sign определения знаказ числа
@@ -36,10 +47,20 @@ def indexOf(arr, item):
 	return -1
 
 
+def vector_append(res, data):
+	
+	if res is None:
+		res = np.expand_dims(data, axis=0)
+	else:
+		res = np.append(res, [data], axis=0)
+	
+	return res
+	
+
 """
 	Преобразует картинку в вектор
 """
-def convert_image_to_vector(image_bytes, is_rgb=True):
+def convert_image_to_vector(image_bytes, mode=None):
 	
 	image = None
 	
@@ -57,33 +78,51 @@ def convert_image_to_vector(image_bytes, is_rgb=True):
 	if image is None:
 		return None
 	
-	if not is_rgb:
-		image = image.convert("L")
-
+	if mode is not None:
+		image = image.convert(mode)
+	
 	image_vector = np.asarray(image)
 
 	return image_vector
 
 
 """
-	Загружает файл и преобразует его в вектор
+	Возвращает выходной вектор
 """
-def load_image_as_vector(file_path):
+def get_output_vector_by_number(number, count):
+	res = [0.0] * count
+	if (number >=0 and number < count):
+		res[number] = 1.0
+	return res
+
+
+"""
+	Возвращает ответ. Позиция максимального значения в векторе будет ответом
+"""
+def get_answer_from_vector(vector):
+	value_max = -math.inf
+	value_index = 0
+	for i in range(0, len(vector)):
+		value = vector[i]
+		if value_max < value:
+			value_index = i
+			value_max = value
 	
-	if not os.path.isfile(file_path):
-		return None
+	return value_index
 	
-	image_vector = None
 	
-	try:
-		image = Image.open(file_path).convert('RGB')
-		image_vector = np.asarray(image)
-		
-	except Exception:
-		image_vector = None
+"""
+	Возвращает обучающий вектор по изображению для символов
+"""
+def get_train_vector_chars(char_number, image):
 	
-	return image_vector
+	question_vector = convert_image_to_vector(image)
+	question_vector = question_vector.astype('float32') / 255.0
 	
+	answer_vector = get_output_vector_by_number(char_number, DATASET_CHARS_COUNT)
+	
+	return question_vector, answer_vector
+
 	
 """
 	Изменение размеров холста картинки
@@ -107,6 +146,9 @@ def image_resize_canvas(image, width, height):
 	return image_new
 
 
+"""
+	Находит символ и возвращает прямоугольник вокруг него
+"""
 def image_get_symbol_box(image):
 	
 	pixels = image.load()
@@ -183,6 +225,9 @@ def image_get_symbol_box(image):
 	return (left, top, right, bottom)
 
 
+"""
+	Находит символ и убирает лишнее побокам пространство
+"""
 def image_symbol_normalize(image, width=32, height=32):
 	
 	box = image_get_symbol_box(image)
@@ -278,6 +323,15 @@ class DataSet:
 	
 	
 	"""
+		Список файлов
+	"""
+	def files(self, file_name = ""):
+		def f(name):
+			return name.find(file_name) == 0
+		return list(filter(f, self.zip_file_namelist[:]))
+	
+	
+	"""
 		Сохраняет поток байтов в zip архив
 	"""
 	def write_bytes(self, file_name, data):
@@ -320,6 +374,13 @@ class DataSet:
 			self.write_bytes(file_name, bytes)
 		
 		pass
+	
+	
+	"""
+		Сохраняет данные в zip архив
+	"""
+	def read_file(self, file_name):
+		return self.zip_file.read(file_name)
 	
 	
 	"""
@@ -792,3 +853,14 @@ class Captcha:
 		
 		pass
 
+
+def generate_captcha_char(char, size=28, number=1, angle=0):
+	import PIL.ImageOps
+	
+	captcha = Captcha()
+	font = captcha.get_font(size=size, number=number)
+	image = captcha.get_rotated_text(char, font, angle)
+	image = PIL.ImageOps.invert(image)
+	image = image_symbol_normalize(image)
+
+	return image

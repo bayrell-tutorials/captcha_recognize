@@ -22,18 +22,6 @@ def generate_captcha_dataset():
 	dataset.close()
 
 
-def generate_captcha_char(char, size=28, number=1, angle=0):
-	import PIL.ImageOps
-	
-	captcha = Captcha()
-	font = captcha.get_font(size=size, number=number)
-	image = captcha.get_rotated_text(char, font, angle)
-	image = PIL.ImageOps.invert(image)
-	image = image_symbol_normalize(image)
-
-	return image
-
-
 def generate_captcha_symbols():
 	
 	dataset = DataSet()
@@ -85,7 +73,10 @@ def generate_captcha_symbols():
 						file_name
 					)
 					
+					#print (file_name)
 					dataset.save_file(file_name + ".png", image)
+					
+					#return
 					
 				pass
 		
@@ -128,7 +119,7 @@ def dataset_test():
 
 
 #generate_captcha_dataset()
-generate_captcha_symbols()
+#generate_captcha_symbols()
 #generate_captcha_and_show()
 #dataset_generate_symbol()
 #dataset_test()

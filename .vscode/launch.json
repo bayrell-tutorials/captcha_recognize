@@ -13,6 +13,22 @@
 			"justMyCode": true
 		},
 		{
+			"name": "train_captcha_mask",
+			"type": "python",
+			"request": "launch",
+			"program": "${workspaceFolder}/train_captcha_mask.py",
+			"console": "integratedTerminal",
+			"justMyCode": true
+		},
+		{
+			"name": "train_captcha_words",
+			"type": "python",
+			"request": "launch",
+			"program": "${workspaceFolder}/train_captcha_words.py",
+			"console": "integratedTerminal",
+			"justMyCode": true
+		},
+		{
 			"name": "Python: текущий файл",
 			"type": "python",
 			"request": "launch",
