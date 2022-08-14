@@ -9,7 +9,6 @@
 import os, random
 
 from ai_helper import *
-from .Captcha import generate_captcha_char
 from .Model1 import Model1
 
 
@@ -17,21 +16,21 @@ from .Model1 import Model1
 DATASET_CHARS = "1234567890QWERTYUIOPASDFGHJKLZXCVBNM"
 DATASET_CHARS_EX = "1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm"
 DATASET_CHARS_COUNT = len(DATASET_CHARS)
-
+DATASET_CHARS_EX_COUNT = len(DATASET_CHARS_EX)
 
 model_list = [
 	Model1(),
 ]
 
 
-def get_model(model_number):
+def get_model(model_name):
 	
 	"""
 		Возратит модель
 	"""
 	
 	for model in model_list:
-		if model.model_number == model_number:
+		if model.model_name == model_name:
 			return model
 			
 	return None
@@ -106,7 +105,7 @@ def save_captcha(data_stream, photo_number, captcha):
 	
 	
 	
-def get_train_vector_chars(char_number, image):
+def get_train_vector_chars(image, char_number):
 	
 	"""
 		Возвращает обучающий вектор (x, y) по изображению image и его номеру char_number
@@ -121,68 +120,7 @@ def get_train_vector_chars(char_number, image):
 	
 	
 	
-
-def get_train_dataset_chars():
-	
-	"""
-		Вовзращает датасет для распознования букв.
-		Загружает данные из папки data/chars
-	"""
-	
-	from .DataReader import DataReader
-	
-	dataset = DataSet()
-	
-	dataset_reader = DataReader()
-	dataset_reader.open("data/chars")
-	
-	for char_number in range(0, DATASET_CHARS_COUNT):
-		
-		char = DATASET_CHARS[ char_number ]
-		files = dataset_reader.files(char)
-		
-		for file in files:
-			
-			# Получаем изображение
-			image = dataset_reader.read_file(file)
-			
-			x, y = get_train_vector_chars(char_number, image)
-			dataset.append(x, y)
-	
-	return dataset
-
-
-
-"""
-	Генерация рандомного датасета
-"""
-def get_train_dataset_chars2(count=1000):
-	
-	dataset = DataSet()
-	
-	for i in range(0, count):
-		
-		char_number = random.randint(0, DATASET_CHARS_COUNT - 1)
-		char = DATASET_CHARS[ char_number ]
-		
-		angle = random.randint(-50, 50)
-		font_size = random.randint(28, 36)
-		
-		# Генерация изображения
-		image = generate_captcha_char(
-			char,
-			size=font_size,
-			angle=angle
-		)
-		
-		x, y = get_train_vector_chars(char_number, image)
-		dataset.append(x, y)
-	
-	
-	return dataset
-	
-	
-def image_get_symbol_box(image):
+def image_get_char_box(image):
 	
 	"""
 		Находит символ и возвращает прямоугольник вокруг него
@@ -262,17 +200,19 @@ def image_get_symbol_box(image):
 	return (left, top, right, bottom)
 	
 	
-"""
-	Находит символ и убирает лишнее побокам пространство
-"""
-def image_symbol_normalize(image, width=32, height=32):
+def image_char_normalize(image, size=(32,32)):
 	
-	box = image_get_symbol_box(image)
+	"""
+		Находит символ, убирает лишнее побокам пространство,
+		и конвертирует в 32x32
+	"""
+	
+	box = image_get_char_box(image)
 	
 	if box is None:
 		return None
 		
 	image = image.crop( box )
-	image = image_resize_canvas(image, width, height)
+	image = image_resize_canvas(image, size)
 	
 	return image

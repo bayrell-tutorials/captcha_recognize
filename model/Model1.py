@@ -5,6 +5,7 @@
 # License: MIT
 ##
 
+import os
 
 from ai_helper import *
 
@@ -19,7 +20,7 @@ class Model1(KerasModel):
 		
 		self.batch_size = 64
 		self.epochs = 30
-		self.train_number = 1
+		self.model_name = os.path.join("data", "model", "1")
 		
 	
 	

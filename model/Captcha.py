@@ -413,15 +413,18 @@ def generate_captcha_char(char, size=28, number=1, angle=0):
 	"""
 		Генерация одной буквы для капчи
 		
+		char - буква
 		size - размер буквы,
 		number - номер шрифта,
 		angle - угол поворота
 	"""
 	
+	from .lib import image_char_normalize
+	
 	captcha = Captcha()
 	font = captcha.get_font(size=size, number=number)
 	image = captcha.get_rotated_text(char, font, angle)
 	image = ImageOps.invert(image)
-	image = image_symbol_normalize(image)
+	image = image_char_normalize(image)
 
 	return image
