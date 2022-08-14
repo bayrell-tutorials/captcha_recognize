@@ -10,7 +10,7 @@ from .Model import Model
 
 
 
-class Model_1(Model):
+class Model_2(Model):
 	
 	
 	def __init__(self):
@@ -20,7 +20,7 @@ class Model_1(Model):
 		self.batch_size = 64
 		self.epochs = 30
 		self.model_name = "model_chars";
-		self.train_number = 1;
+		self.train_number = 2;
 		
 	
 	
@@ -46,18 +46,18 @@ class Model_1(Model):
 		self.model.add(Reshape( target_shape=(input_shape[0], input_shape[1], 1) ))
 		
 		# Сверточный слой
-		self.model.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
+		self.model.add(Conv2D(256, kernel_size=(3, 3), padding="same", activation="relu"))
 		self.model.add(MaxPooling2D(pool_size=(2, 2)))
 		
 		# Сверточный слой
-		self.model.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))
+		self.model.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
 		self.model.add(MaxPooling2D(pool_size=(2, 2)))
 		
 		# Выравнивающий слой
 		self.model.add(Flatten())
 		
 		# Полносвязные слои
-		self.model.add(Dense(256, activation='relu'))
+		self.model.add(Dense(512, activation='relu'))
 		self.model.add(Dropout(0.5))
 		
 		# Выходной слой

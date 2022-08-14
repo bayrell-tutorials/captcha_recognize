@@ -12,6 +12,7 @@ import os, sys, random, math
 os.environ["TF_CPP_VMODULE"]="gpu_process_state=10,gpu_cudamallocasync_allocator=10"
 
 from lib.Model_1 import Model_1
+from lib.Model_2 import Model_2
 from lib.Helper import tensorflow_gpu_init
 from lib.DataSet import get_answer_from_vector, \
 	get_train_dataset_chars, get_train_dataset_chars2, \
@@ -38,14 +39,14 @@ def do_train(model):
 		train_dataset.build()
 		model.set_dataset(train_dataset)
 		
-		input_shape, output_shape, train_count, control_count = train_dataset.get_shape()
+		input_shape, output_shape, train_count, test_count = train_dataset.get_build_shape()
 		
 		print ("=========================")
 		print ("Dataset info:")
 		print ("Input shape:", input_shape)
 		print ("Output shape:", output_shape)
 		print ("Train count:", train_count)
-		print ("Control count:", control_count)
+		print ("Test count:", test_count)
 		print ("=========================")
 		
 		# Создаем модель
@@ -77,9 +78,9 @@ def check_answer(question, answer, control):
 
 def check_model(model):
 	
-	test_dataset = get_train_dataset_chars2(1000)
+	control_dataset = get_train_dataset_chars2(1000)
 	correct_answers, total_questions = model.check(
-		test_dataset=test_dataset,
+		control_dataset=control_dataset,
 		callback=check_answer
 	)
 	
@@ -90,6 +91,7 @@ def check_model(model):
 
 # Запуск
 model = Model_1()
+
 print ("Model: ", model.get_model_name())
 do_train(model)
 check_model(model)

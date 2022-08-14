@@ -109,8 +109,8 @@ def get_train_dataset_chars():
 			# Получаем изображение
 			image = dataset_reader.read_file(file)
 			
-			vector = get_train_vector_chars(char_number, image)
-			dataset.append(vector)
+			x, y = get_train_vector_chars(char_number, image)
+			dataset.append(x, y)
 	
 	return dataset
 
@@ -138,8 +138,8 @@ def get_train_dataset_chars2(count=1000):
 			angle=angle
 		)
 		
-		vector = get_train_vector_chars(char_number, image)
-		dataset.append(vector)
+		x, y = get_train_vector_chars(char_number, image)
+		dataset.append(x, y)
 	
 	
 	return dataset
@@ -153,17 +153,17 @@ class DataSet:
 		self.data = []
 		self.train_x = None
 		self.train_y = None
-		self.control_x = None
-		self.control_y = None
+		self.test_x = None
+		self.test_y = None
 		self._is_new = False
 	
 	
 	"""
 		Добавить в датасет данные
 	"""
-	def append(self, data):
+	def append(self, x, y):
 		
-		self.data.append(data)
+		self.data.append((x, y))
 		self._is_new = True
 	
 	
@@ -182,30 +182,46 @@ class DataSet:
 		
 		if self._is_new and self.data != None:
 			
-			train, control = train_test_split(self.data)
+			train, test = train_test_split(self.data)
 			
 			self.train_x = np.asarray(list(map(lambda item: item[0], train)))
 			self.train_y = np.asarray(list(map(lambda item: item[1], train)))
 			
-			self.control_x = np.asarray(list(map(lambda item: item[0], control)))
-			self.control_y = np.asarray(list(map(lambda item: item[1], control)))
+			self.test_x = np.asarray(list(map(lambda item: item[0], test)))
+			self.test_y = np.asarray(list(map(lambda item: item[1], test)))
 			
 			self._is_new = False
 			
-			del train, control
+			del train, test
 	
 	
+	"""
+		Возвращает размеры входного векторов
+	"""
+	def get_input_shape(self):
+		input_shape = self.data[0][0].shape
+		return input_shape
+		
+		
+	"""
+		Возвращает размеры выходного векторов
+	"""
+	def get_output_shape(self):
+		output_shape = self.data[0][1].shape
+		return output_shape
+		
+		
 	"""
 		Возвращает размеры входного и выходного векторов
 	"""
-	def get_shape(self):
+	def get_build_shape(self):
 		
 		input_shape = self.train_x.shape[1:]
 		output_shape = self.train_y.shape[1]
 		train_count = self.train_x.shape[0]
-		control_count = self.control_x.shape[0]
+		test_count = self.test_x.shape[0]
 		
-		return input_shape, output_shape, train_count, control_count
+		return input_shape, output_shape, train_count, test_count
 	
 	
 	

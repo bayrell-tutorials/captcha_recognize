@@ -57,7 +57,8 @@ class Model:
 		model_name = self.get_model_name()
 		self.model = Sequential(name=model_name)
 		
-		input_shape, output_shape, _, _ = self.dataset.get_shape()
+		input_shape = self.dataset.get_input_shape()
+		output_shape = self.dataset.get_output_shape()
 		
 		# Входной слой
 		self.model.add(Input(input_shape, name='input'))
@@ -67,7 +68,7 @@ class Model:
 		self.model.add(Dropout(0.5))
 		
 		# Выходной слой
-		self.model.add(Dense(output_shape, name='output', activation='softmax'))
+		self.model.add(Dense(output_shape[0], name='output', activation='softmax'))
 		
 		# Среднеквадратическая функция ошибки
 		self.model.compile(
@@ -158,7 +159,7 @@ class Model:
 			epochs=self.epochs,
 			
 			# Контрольные данные
-			validation_data=(self.dataset.control_x, self.dataset.control_y),
+			validation_data=(self.dataset.test_x, self.dataset.test_y),
 			
 			# Подробный вывод
 			verbose=1,
@@ -198,10 +199,10 @@ class Model:
 	"""
 		Проверка модели
 	"""
-	def check(self, test_dataset, callback=None):
+	def check(self, control_dataset, callback=None):
 		
-		vector_x = test_dataset.get_x()
-		vector_y = test_dataset.get_y()
+		vector_x = control_dataset.get_x()
+		vector_y = control_dataset.get_y()
 		
 		# Спрашиваем модель
 		vector_answer = self.model.predict( vector_x )
