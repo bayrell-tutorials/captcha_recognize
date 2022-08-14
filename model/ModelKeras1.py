@@ -11,7 +11,7 @@ from ai_helper import *
 
 
 
-class Model1(KerasModel):
+class ModelKeras1(KerasModel):
 	
 	
 	def __init__(self):
@@ -20,7 +20,7 @@ class Model1(KerasModel):
 		
 		self.batch_size = 64
 		self.epochs = 30
-		self.model_name = os.path.join("data", "model", "1")
+		self.model_name = os.path.join("data", "model", "keras1")
 		
 	
 	

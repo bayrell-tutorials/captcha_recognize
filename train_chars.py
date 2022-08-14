@@ -112,7 +112,7 @@ def check_model(model: KerasModel):
 if __name__ == '__main__':
 	
 	# Запуск
-	model = get_model("data/model/1")
+	model = get_model("data/model/keras1")
 	
 	model.input_shape = (32, 32)
 	model.output_shape = (DATASET_CHARS_COUNT)
@@ -126,6 +126,11 @@ if __name__ == '__main__':
 	
 	do_create(model)
 	do_train(model)
+	
+	print ("")
+	print ("")
+	print ("=====================================")
+	print ("Check model: ", model.get_model_name())
 	check_model(model)
 
 	pass

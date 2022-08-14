@@ -9,7 +9,7 @@
 import os, random
 
 from ai_helper import *
-from .Model1 import Model1
+from .ModelKeras1 import ModelKeras1
 
 
 # Constant
@@ -19,7 +19,7 @@ DATASET_CHARS_COUNT = len(DATASET_CHARS)
 DATASET_CHARS_EX_COUNT = len(DATASET_CHARS_EX)
 
 model_list = [
-	Model1(),
+	ModelKeras1(),
 ]
 
 
