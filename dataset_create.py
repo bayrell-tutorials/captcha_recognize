@@ -8,38 +8,63 @@
 
 import os
 
-from lib.Captcha import generate_captcha_char
-from lib.DataSet import DataSetReader
+from ai_helper import *
+from model.Captcha import Captcha, generate_captcha_char
+from model.DataReader import DataReader
+from model.lib import DATASET_CHARS_EX
 
 
-def generate_captcha_dataset():
+def create_captcha_dataset():
 	
-	dataset_stream = DataSetReader()
-	dataset_stream.open("data_chars")
-
+	"""
+		Создает датасет капчи
+	"""
+	
+	dataset_stream = DataStream()
+	dataset_stream.open("data", "captcha")
+	
+	force = False
 	count_images = 1000
-	for i in range(0, count_images):
-		print (i)
-		dataset_stream.generate_captcha(i, force=False)
+	for photo_number in range(0, count_images):
+		
+		print (photo_number)
+		
+		# Проверка есть ли такой уже файл
+		if not force:
+			captcha = dataset_stream.read_captcha(photo_number)
+			if captcha is not None:
+				del captcha
+				continue
+		
+		captcha = Captcha()
+		captcha.generate()
+		captcha.resize_max()
+		
+		dataset_stream.save_captcha(photo_number, captcha)
+		
+		del captcha
 	
 	dataset_stream.close()
 
 
 
-def generate_captcha_symbols():
+def create_symbols_dataset():
 	
-	dataset_stream = DataSetReader()
-	dataset_stream.open("data_chars")
+	"""
+		Создает датасет символов
+	"""
 	
-	text_str="1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm"
-	text_str_count = len(text_str)
+	dataset_stream = DataReader()
+	dataset_stream.open( "data", "dataset" )
+	
+	text_str_count = len(DATASET_CHARS_EX)
 	
 	angles = [-45,-35,-25,-10,0,10,25,35,45];
 	font_sizes = [28,34]
 	
 	for char_number in range(0, text_str_count):
 		
-		char = text_str[char_number]
+		char = DATASET_CHARS_EX[char_number]
 		print (char)
 		
 		for font_number in range(0, 6):
@@ -75,4 +100,5 @@ def generate_captcha_symbols():
 	dataset_stream.close()
 
 
-generate_captcha_symbols()
+#create_captcha_dataset()
+create_symbols_dataset()

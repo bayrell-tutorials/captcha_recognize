@@ -11,8 +11,8 @@ import os, sys, random, math
 #os.environ["TF_GPU_ALLOCATOR"]="cuda_malloc_async"
 os.environ["TF_CPP_VMODULE"]="gpu_process_state=10,gpu_cudamallocasync_allocator=10"
 
-from lib.Model_1 import Model_1
-from lib.Model_2 import Model_2
+from model.Model_1 import Model_1
+from model.Model_2 import Model_2
 from lib.Helper import tensorflow_gpu_init
 from lib.DataSet import get_answer_from_vector, \
 	get_train_dataset_chars, get_train_dataset_chars2, \
@@ -59,7 +59,7 @@ def do_train(model):
 		
 	else:
 		
-		#model.show()
+		model.show()
 		pass
 
 
@@ -71,7 +71,7 @@ def check_answer(question, answer, control):
 	
 	if answer_value != control_value:
 		title = DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value]
-		print (title)
+		#print (title)
 	
 	return answer_value == control_value
 

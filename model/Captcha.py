@@ -8,7 +8,8 @@
 import math, random, json
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from .Image import image_resize_canvas, image_symbol_normalize
+
+from ai_helper import *
 
 
 class Captcha:
@@ -143,10 +144,11 @@ class Captcha:
 		return (img, draw)
 	
 	
-	"""
-		Рисует линии
-	"""
 	def draw_line(self, draw, color, width):
+		
+		"""
+			Рисует линии
+		"""
 			
 		padding_x = 25
 		padding_y = 10
@@ -161,10 +163,11 @@ class Captcha:
 		draw.line(position, fill=color, width=width)
 	
 	
-	"""
-		Рисует точки
-	"""
 	def draw_dots(self, draw, color, width):
+		
+		"""
+			Рисует точки
+		"""
 		
 		padding_x = 25
 		padding_y = 10
@@ -175,10 +178,11 @@ class Captcha:
 		draw.ellipse(position, fill=color, width=width)
 	
 	
-	"""
-		Рисует текст капчи
-	"""
 	def get_rotated_text(self, text, font, angle):
+		
+		"""
+			Рисует текст капчи
+		"""
 		
 		text_size = font.getsize(text)
 		image_size = (text_size[1] + 2, text_size[1] + 2)
@@ -213,10 +217,11 @@ class Captcha:
 		return img
 		
 	
-	"""
-		Рисует текст капчи
-	"""
 	def draw_text(self, image_result, image_mask, position_center, text, color, font, angle):
+		
+		"""
+			Рисует текст капчи
+		"""
 		
 		img = self.get_rotated_text(text, font, angle)
 		img_size = img.size
@@ -251,10 +256,11 @@ class Captcha:
 	
 	
 	
-	"""
-		Алгоритм генерации капчи
-	"""
 	def generate(self):
+		
+		"""
+			Алгоритм генерации капчи
+		"""
 		
 		text_str="1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm"
 		text_str_count = len(text_str)
@@ -396,13 +402,21 @@ class Captcha:
 
 	def resize_max(self):
 		
-		self.image = image_resize_canvas(self.image, self.image_width_max, self.image_height_max)
-		self.mask = image_resize_canvas(self.mask, self.image_width_max, self.image_height_max)
+		self.image = image_resize_canvas(self.image, (self.image_width_max, self.image_height_max))
+		self.mask = image_resize_canvas(self.mask, (self.image_width_max, self.image_height_max))
 		
 		pass
 	
-	
+
 def generate_captcha_char(char, size=28, number=1, angle=0):
+	
+	"""
+		Генерация одной буквы для капчи
+		
+		size - размер буквы,
+		number - номер шрифта,
+		angle - угол поворота
+	"""
 	
 	captcha = Captcha()
 	font = captcha.get_font(size=size, number=number)
