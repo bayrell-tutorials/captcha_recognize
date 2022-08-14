@@ -6,46 +6,36 @@
 # License: MIT
 ##
 
-from lib import *
+import os
+
+from lib.Captcha import generate_captcha_char
+from lib.DataSet import DataSetReader
 
 
 def generate_captcha_dataset():
-
-	dataset = DataSet()
-	dataset.open("data/captcha_dataset.zip")
+	
+	dataset_stream = DataSetReader()
+	dataset_stream.open("data_chars")
 
 	count_images = 1000
 	for i in range(0, count_images):
 		print (i)
-		dataset.generate_captcha(i, force=False)
+		dataset_stream.generate_captcha(i, force=False)
+	
+	dataset_stream.close()
 
-	dataset.close()
 
 
 def generate_captcha_symbols():
 	
-	dataset = DataSet()
-	dataset.open("data/captcha_dataset.zip")
+	dataset_stream = DataSetReader()
+	dataset_stream.open("data_chars")
 	
 	text_str="1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm"
 	text_str_count = len(text_str)
 	
-	angles = [
-		-45,
-		-35,
-		-25,
-		-10,
-		0,
-		10,
-		25,
-		35,
-		45
-	];
-	
-	font_sizes = [
-		28,
-		34
-	]
+	angles = [-45,-35,-25,-10,0,10,25,35,45];
+	font_sizes = [28,34]
 	
 	for char_number in range(0, text_str_count):
 		
@@ -70,58 +60,19 @@ def generate_captcha_symbols():
 						str(angle)
 					)
 					file_name = os.path.join(
-						"chars",
 						char.upper(),
 						file_name
 					)
 					
 					#print (file_name)
-					dataset.save_file(file_name + ".png", image)
+					dataset_stream.save_file(file_name + ".png", image)
 					
 					#return
 					
 				pass
 		
 	
-	dataset.close()
-	
-
-def generate_captcha_and_show():
-	captcha = Captcha()
-	captcha.generate()
-	captcha.resize_max()
-	captcha.show()
+	dataset_stream.close()
 
 
-def dataset_generate_symbol():
-	captcha = Captcha()
-	
-	import PIL.ImageOps
-	
-	font = captcha.get_font(size=28, number=1)
-	angle = -45
-	
-	image = captcha.get_rotated_text("W", font, angle)
-	image = PIL.ImageOps.invert(image)
-	image = image_symbol_normalize(image)
-	
-	plt.imshow(image, cmap='gray')
-	plt.show()
-
-
-def dataset_test():
-	
-	dataset = DataSet()
-	dataset.open("data/captcha_dataset.zip")
-	
-	captcha = dataset.get_captcha(1)
-	print (captcha)
-	
-	dataset.close();
-
-
-#generate_captcha_dataset()
-#generate_captcha_symbols()
-#generate_captcha_and_show()
-#dataset_generate_symbol()
-#dataset_test()
+generate_captcha_symbols()

@@ -6,354 +6,91 @@
 # License: MIT
 ##
 
-import os
+import os, sys, random, math
 
 #os.environ["TF_GPU_ALLOCATOR"]="cuda_malloc_async"
-#os.environ["TF_CPP_VMODULE"]="gpu_process_state=10,gpu_cudamallocasync_allocator=10"
+os.environ["TF_CPP_VMODULE"]="gpu_process_state=10,gpu_cudamallocasync_allocator=10"
 
-import math, random
-import tensorflow as tf
-import tensorflow.keras as keras
+from lib.Model_1 import Model_1
+from lib.Helper import tensorflow_gpu_init
+from lib.DataSet import get_answer_from_vector, \
+	get_train_dataset_chars, get_train_dataset_chars2, \
+	DATASET_CHARS
 
-from lib import *
-from sklearn.model_selection import train_test_split
 
-#config = tf.ConfigProto()
-#session = tf.Session(config=config)
-
-#config = tf.compat.v1.ConfigProto(
-#	gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.2)
-#)
-#config.gpu_options.allow_growth = True
-#session = tf.compat.v1.Session(config=config)
-#tf.compat.v1.keras.backend.set_session(session)
-
-gpus = tf.config.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(gpus[0], True)
-tf.config.experimental.set_virtual_device_configuration(
-    gpus[0],
-    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024)])
-logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-
-model_name = "model_chars"
-train_number = 4
-dataset_path = "data/captcha_dataset.zip"
-model_train_name = model_name + "_" + str(train_number)
-
-print ( model_train_name )
-
+# Инициализация
 random.seed()
+tensorflow_gpu_init(1024)
 
-"""
-	Датасет из zip файла
-"""
-def get_train_dataset():
-	
-	res_question = None
-	res_answer = None
-
-	dataset = DataSet()
-	dataset.open(dataset_path)
-	
-	for char_number in range(0, DATASET_CHARS_COUNT):
-		
-		char = DATASET_CHARS[ char_number ]
-		files = dataset.files("chars/" + char)
-		for file in files:
-			
-			# Получаем изображение
-			image = dataset.read_file(file)
-			
-			# Получаем вектора
-			question_vector, answer_vector = get_train_vector_chars(char_number, image)
-			
-			# Добавляем вектора в результат
-			res_question = vector_append(res_question, question_vector)
-			res_answer = vector_append(res_answer, answer_vector)
-			
-	return (res_question, res_answer)
+#sys.exit()
 
 
-"""
-	Рандомная обучающий датасет
-"""
-def get_train_dataset2(count=1000):
+def do_train(model):
 	
-	res_question = None
-	res_answer = None
+	# Загружаем модель
+	model.load()
 	
-	for i in range(0, count):
+	# Если модель не загружена, то создаем и обучаем ее
+	if not model.is_loaded():
 		
-		char_number = random.randint(0, DATASET_CHARS_COUNT - 1)
-		char = DATASET_CHARS[ char_number ]
+		# Загружаем обучающий датасет
+		train_dataset = get_train_dataset_chars()
+		train_dataset.build()
+		model.set_dataset(train_dataset)
 		
-		#angle = random.randint(-50, 50)
-		angle = 0
-		font_size = random.randint(28, 36)
+		input_shape, output_shape, train_count, control_count = train_dataset.get_shape()
 		
-		# Генерация изображения
-		image = generate_captcha_char(
-			char,
-			size=font_size,
-			angle=angle
-		)
+		print ("=========================")
+		print ("Dataset info:")
+		print ("Input shape:", input_shape)
+		print ("Output shape:", output_shape)
+		print ("Train count:", train_count)
+		print ("Control count:", control_count)
+		print ("=========================")
 		
-		# Получаем вектора
-		question_vector, answer_vector = get_train_vector_chars(char_number, image)
+		# Создаем модель
+		model.create()
+		model.show()
 		
-		# Добавляем вектора в результат
-		res_question = vector_append(res_question, question_vector)
-		res_answer = vector_append(res_answer, answer_vector)
+		# Обучаем модель
+		model.train()
+		model.train_show()
 		
-	return res_question, res_answer
-	
-
-"""
-	Создание модели
-"""
-def create_model(input_shape, output_shape, train_number):
-	
-	from tensorflow.keras.models import Sequential
-	from tensorflow.keras.layers import Dense, Input, Flatten, \
-		Dropout, Conv2D, MaxPooling2D, Reshape
-	
-	model_train_name = model_name + "_" + str(train_number)
-	model = Sequential(name=model_train_name)
-	
-	input_shape = input_shape[1:]
-	output_shape = output_shape[1]
-	
-	# Входной слой
-	model.add(Input(input_shape, name='input'))
-	
-	# Reshape
-	model.add(Reshape( target_shape=(input_shape[0], input_shape[1], 1) ))
-	
-	# Сверточный слой
-	model.add(Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"))
-	model.add(MaxPooling2D(pool_size=(2, 2)))
-	
-	# Сверточный слой
-	model.add(Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"))
-	model.add(MaxPooling2D(pool_size=(2, 2)))
-	
-	# Сверточный слой
-	#model.add(Conv2D(32, kernel_size=(3, 3), padding="same", activation="relu"))
-	#model.add(MaxPooling2D(pool_size=(2, 2)))
-	
-	# Выравнивающий слой
-	model.add(Flatten())
-	
-	# Полносвязные слои
-	#model.add(Dense(256, activation='relu'))
-	#model.add(Dropout(0.5))
-	
-	model.add(Dense(512, activation='relu'))
-	model.add(Dropout(0.5))
-	
-	# Выходной слой
-	model.add(Dense(output_shape, name='output', activation='softmax'))
-	
-	# Среднеквадратическая функция ошибки
-	model.compile(
-		loss='mean_squared_error', 
-		optimizer='adam',
-		metrics=['accuracy'])
-	
-	# Вывод на экран информация о модели
-	model.summary()
-	
-	file_name = "data/" + model_train_name + "_plot.png"
-	
-	keras.utils.plot_model(
-		model,
-		to_file=file_name,
-		show_shapes=True)
-	
-	#img = pltimg.imread(file_name)
-	#plt.imshow(img)
-	#plt.show()
-	
-	return model
-	
-	
-"""
-	Обучение модели
-"""
-def train_model(model, train_x, train_y, test_x, test_y, train_number=1):
-	
-	checkpoint_path = "data/"  + model_name + "/training_" + str(train_number) + "/cp.ckpt"
-	checkpoint_dir = os.path.dirname(checkpoint_path)
-	
-	# Создаем папку, куда будут сохраняться веса во время обучения
-	if not os.path.isdir(checkpoint_dir):
-		os.makedirs(checkpoint_dir)
-	
-	# Callback функия для сохранения весов
-	cp_callback = keras.callbacks.ModelCheckpoint(
-		filepath=checkpoint_path,
-		save_weights_only=True,
-		verbose=1
-	)
-	
-	history = model.fit(
+	else:
 		
-		# Входные данные
-		train_x,
-		
-		# Выходные данные
-		train_y,
-		
-		# Размер партии для обучения
-		batch_size=512,
-		
-		# Количество эпох обучения
-		epochs=20,
-		
-		# Контрольные данные
-		validation_data=(test_x, test_y),
-		
-		# Подробный вывод
-		verbose=1,
-		
-		# Сохраняем контрольные точки
-		callbacks=[cp_callback]
-	) 
-	
-	# Сохраняем модель на диск
-	model.save('data/' + model_name)
-	model.save('data/' + model_name + ".h5")
-	model.save('data/' + model_train_name + ".h5")
-	
-	total_val_accuracy = math.ceil(history.history['val_accuracy'][-1] * 100)
-	
-	# Сохраняем картинку
-	plt.title("Итог: " + str(total_val_accuracy) + "%")
-	plt.plot( np.multiply(history.history['accuracy'], 100), label='Обучение')
-	plt.plot( np.multiply(history.history['val_accuracy'], 100), label='Контрольные ответы')
-	plt.plot( np.multiply(history.history['loss'], 100), label='Ошибка')
-	plt.ylabel('Процент')
-	plt.xlabel('Эпоха')
-	plt.legend()
-	plt.savefig('data/' + model_train_name + '_history.png')
-	plt.show()
-	
-	return history
-	
-
-def do_train(train_number = 1):
-	
-	res = get_train_dataset()
-	
-	print ("Shape question:", res[0].shape)
-	print ("Shape answer:", res[1].shape)
-	
-	model = create_model(res[0].shape, res[1].shape, train_number)
-
-	train_x, test_x, train_y, test_y = train_test_split(res[0], res[1])
-
-	print("Train", train_x.shape, "=>", train_y.shape)
-	print("Test", test_x.shape, "=>", test_y.shape)
-
-	train_model(model, train_x, train_y, test_x, test_y, train_number)
-
-
-def show_train_model(train_number):
-	
-	model = keras.models.load_model('data/' + model_train_name + '.h5')
-	
-	# Вывод на экран информация о модели
-	model.summary()
-	
-	file_name = "data/" + model_train_name + "_plot.png"
-	
-	keras.utils.plot_model(
-		model,
-		to_file=file_name,
-		show_shapes=True
-	)
-	
-	
-def do_check(count=10000):
-	
-	dataset = DataSet()
-	dataset.open(dataset_path)
-	
-	#model = keras.models.load_model('data/' + model_name)
-	model = keras.models.load_model('data/' + model_train_name + '.h5')
-	
-	res_question = None
-	
-	def create_question_random_chars(count):
-		
-		res_question = None
-		res_control = []
-		
-		for i in range(0, count):
-			
-			char_number = random.randint(0, DATASET_CHARS_COUNT - 1)
-			char = DATASET_CHARS[ char_number ]
-			angle = random.randint(-50, 50)
-			#angle = 0
-			font_size = random.randint(28, 36)
-			
-			image = generate_captcha_char(
-				char,
-				size=font_size,
-				angle=angle
-			)
-			
-			# Получаем вектора
-			question_vector, _ = get_train_vector_chars(char_number, image)
-			
-			# Добавляем вектора в результат
-			res_question = vector_append(res_question, question_vector)
-			res_control.append(char_number)
-			
-		return res_question, res_control
-		
-	
-	# Формируем запрос
-	res_question, res_control = create_question_random_chars(count)
-	#res_question, res_control = create_question_from_dataset(dataset)
-	
-	# Спрашиваем модель
-	res_answer = model.predict( res_question )
-	
-	# Выводим ответы
-	correct_answers = 0
-	res_answer_count = len(res_answer)
-	
-	for i in range(0, res_answer_count):
-		
-		control_value = res_control[i]
-		answer_vector = res_answer[i]
-		answer_value = get_answer_from_vector(answer_vector)
-		
-		if answer_value != control_value:
-			
-			title = DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value]
-			print (title)
-		
-			image = res_question[i]
-			
-			#plt.title(title)
-			#plt.imshow(image, cmap='gray')
-			#plt.show()
-			
-		
-		if control_value == answer_value:
-			correct_answers = correct_answers + 1
+		#model.show()
 		pass
+
+
+# Проверка ответа
+def check_answer(question, answer, control):
 	
-	rate = math.ceil(correct_answers / res_answer_count * 100)
-	print ("Correct answers: " + str(correct_answers) + " of " + str(res_answer_count))
+	answer_value = get_answer_from_vector(answer)
+	control_value = get_answer_from_vector(control)
+	
+	if answer_value != control_value:
+		title = DATASET_CHARS[answer_value] + " | " + DATASET_CHARS[control_value]
+		print (title)
+	
+	return answer_value == control_value
+
+
+def check_model(model):
+	
+	test_dataset = get_train_dataset_chars2(1000)
+	correct_answers, total_questions = model.check(
+		test_dataset=test_dataset,
+		callback=check_answer
+	)
+	
+	rate = math.ceil(correct_answers / total_questions * 100)
+	print ("Correct answers: " + str(correct_answers) + " of " + str(total_questions))
 	print ("Rate: " + str(rate) + "%")
-	
-	pass
 
 
-do_train(train_number)
-#do_check(1000)
+# Запуск
+model = Model_1()
+print ("Model: ", model.get_model_name())
+do_train(model)
+check_model(model)
 
-#show_train_model(1)
