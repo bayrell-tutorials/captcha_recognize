@@ -10,6 +10,7 @@ import os, random
 
 from ai_helper import *
 from .ModelKeras1 import ModelKeras1
+#from .ModelTorch1 import ModelTorch1
 
 
 # Constant
@@ -18,8 +19,11 @@ DATASET_CHARS_EX = "1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvb
 DATASET_CHARS_COUNT = len(DATASET_CHARS)
 DATASET_CHARS_EX_COUNT = len(DATASET_CHARS_EX)
 
+
+# Known models
 model_list = [
 	ModelKeras1(),
+	#ModelTorch1(),
 ]
 
 

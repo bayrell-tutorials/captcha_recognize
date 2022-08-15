@@ -18,12 +18,11 @@ from dataset import create_random_chars_dataset, load_train_dataset_chars
 
 # Инициализация
 random.seed()
-tensorflow_gpu_init(1024)
 
 #sys.exit()
 
 
-def do_create(model: KerasModel):
+def do_create(model: AbstractModel):
 	
 	"""
 		Создаем модель
@@ -39,7 +38,7 @@ def do_create(model: KerasModel):
 		model.show_summary()
 
 
-def do_train(model: KerasModel):
+def do_train(model: AbstractModel):
 	
 	"""
 		Обучаем модель
@@ -52,7 +51,7 @@ def do_train(model: KerasModel):
 		train_dataset = load_train_dataset_chars()
 		train_dataset.build_train()
 		
-		input_shape, output_shape, train_count, test_count = train_dataset.get_build_train_shape()
+		input_shape, output_shape, train_count, test_count = train_dataset.get_train_shape()
 		
 		print ("=========================")
 		print ("Dataset info:")
@@ -91,7 +90,7 @@ def check_answer(question, answer, control):
 
 
 
-def check_model(model: KerasModel):
+def check_model(model: AbstractModel):
 	
 	"""
 		Проверка модели
@@ -111,8 +110,12 @@ def check_model(model: KerasModel):
 
 if __name__ == '__main__':
 	
+	# Настройка GPU
+	# tensorflow_gpu_init(1024)
+	
 	# Запуск
-	model = get_model("data/model/keras1")
+	#model = get_model("data/model/keras1")
+	model = get_model("data/model/torch1")
 	
 	model.input_shape = (32, 32)
 	model.output_shape = (DATASET_CHARS_COUNT)
