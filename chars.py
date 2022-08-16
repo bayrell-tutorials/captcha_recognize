@@ -8,6 +8,7 @@
 
 import torch
 from model.CharsNetwork import CharsNetwork
+from model.Model2 import Model2
 
 
 def create_dataset():
@@ -42,7 +43,7 @@ def train_net(net:CharsNetwork):
 	"""
 	
 	# Загрузить сеть с диска
-	#net.load()
+	net.load()
 	net._is_trained = False
 	
 	# Если модель обучена
@@ -80,7 +81,7 @@ def control_net(net:CharsNetwork):
 
 if __name__ == '__main__':
 	
-	net = CharsNetwork()
+	net = Model2()
 	
 	# Создать модель
 	net.create_model()

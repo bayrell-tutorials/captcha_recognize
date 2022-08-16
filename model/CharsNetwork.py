@@ -50,8 +50,6 @@ class CharsNetwork(AbstractNetwork):
 		
 		import torch.nn.functional as F
 		
-		self.epochs = 5
-		
 		class Model(nn.Module):
 			def __init__(self, net):
 				super(Model, self).__init__()
@@ -115,7 +113,6 @@ class CharsNetwork(AbstractNetwork):
 				x = F.relu(self.fc1(x))
 				x = self.drop50(x)
 				x = self.fc2(x)
-				#x = F.softmax(self.fc2(x), dim=0)
 				
 				self.net.print_debug("Output:", x.shape)
 				
@@ -124,15 +121,6 @@ class CharsNetwork(AbstractNetwork):
 		self.model = Model(self)
 		
 		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=3e-4)
-		
-		"""
-		self.model = nn.Sequential(
-			nn.Linear(784, 128),
-			nn.ReLU(),
-			nn.Linear(128, 10),
-			#nn.Softmax()
-		)	
-		"""
 	
 	
 	def check_answer(self, **kwargs):
@@ -141,6 +129,7 @@ class CharsNetwork(AbstractNetwork):
 		Check answer
 		"""
 		
+		type = kwargs["type"]
 		tensor_y = kwargs["tensor_y"]
 		tensor_predict = kwargs["tensor_predict"]
 		
@@ -151,8 +140,11 @@ class CharsNetwork(AbstractNetwork):
 		predict = get_answer_from_vector(tensor_predict)
 		
 		if (predict != y) and (type == "control"):
-			#title = DATASET_CHARS[predict] + " | " + DATASET_CHARS[y]
+			title = DATASET_CHARS[predict] + " | " + DATASET_CHARS[y]
 			#print (title)
+			tensor_x = kwargs["tensor_x"]
+			tensor_x = tensor_x * 255
+			#plot_show_image( tensor_x.tolist(), cmap="gray" )
 			pass
 		
 		return predict == y
