@@ -87,7 +87,7 @@ if __name__ == '__main__':
 	#create_dataset()
 	#check_net(net)
 	
-	train_net(net)
+	#train_net(net)
 	control_net(net)
 	
 	

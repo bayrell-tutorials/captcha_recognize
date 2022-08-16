@@ -66,11 +66,11 @@ class CharsNetwork(AbstractNetwork):
 				self.drop50 = nn.Dropout(0.50)
 				
 				# Сверточный слой
-				self.conv1 = nn.Conv2d(1, 128, kernel_size=5)
-				self.conv2 = nn.Conv2d(128, 64, kernel_size=5)
+				self.conv1 = nn.Conv2d(1, 128, kernel_size=3, padding=(1,1))
+				self.conv2 = nn.Conv2d(128, 64, kernel_size=3, padding=(1,1))
 				
 				# Полносвязный слой
-				self.fc1 = nn.Linear(1600, 256)
+				self.fc1 = nn.Linear(4096, 256)
 				self.fc2 = nn.Linear(256, DATASET_CHARS_COUNT)
 			
 			
@@ -85,43 +85,51 @@ class CharsNetwork(AbstractNetwork):
 				x = F.relu(self.conv1(x))
 				self.net.print_debug("Conv1:", x.shape)
 				
-				# Выход: 128, 28, 28
+				# Выход: 128, 32, 32
 				
 				# Макс пулинг
 				x = self.max_pool(x)
 				self.net.print_debug("Max pool1:", x.shape)
 				
-				# Выход: 128, 14, 14
+				# Выход: 128, 16, 16
 				
 				# Сверточный слой 2
 				x = F.relu(self.conv2(x))
 				self.net.print_debug("Conv2:", x.shape)
 				
-				# Выход: 64, 10, 10
+				# Выход: 64, 16, 16
 				
 				# Макс пулинг
 				x = self.max_pool(x)
 				self.net.print_debug("Max pool2:", x.shape)
 				
-				# Выход: 64, 5, 5
+				# Выход: 64, 8, 8
 				
 				# Выравнивающий слой
-				x = x.view(-1, 1600)
+				x = x.view(-1, 4096)
 				self.net.print_debug("Line:", x.shape)
 				
-				# Выход: 1600
+				# Выход: 4096
 				
 				# Полносвязный слои
 				x = F.relu(self.fc1(x))
 				x = self.drop50(x)
-				x = F.softmax(self.fc2(x), dim=0)
+				x = self.fc2(x)
+				#x = F.softmax(self.fc2(x), dim=0)
 				
-				self.net.print_debug("Layer3:", x.shape)
-								
+				self.net.print_debug("Output:", x.shape)
+				
 				return x
 		
 		self.model = Model(self)
-	
+		"""
+		self.model = nn.Sequential(
+			nn.Linear(784, 128),
+			nn.ReLU(),
+			nn.Linear(128, 10),
+			#nn.Softmax()
+		)	
+		"""
 	
 	
 	def check_answer(self, **kwargs):
@@ -181,63 +189,21 @@ class CharsNetwork(AbstractNetwork):
 		Возвращает нормализованные обучающие датасеты
 		"""
 		
-		from sklearn.model_selection import train_test_split
+		obj = torch.load("data/chars.data")
+		train_x = obj["x"]
+		train_y = obj["y"]
 		
-		dir = Directory()
-		dir.open("data", "chars")
-		
-		train_x = torch.tensor([])
-		train_y = torch.tensor([])
-		test_x = torch.tensor([])
-		test_y = torch.tensor([])
-		
-		for char_number in range(0, DATASET_CHARS_COUNT):
-		
-			char = DATASET_CHARS[ char_number ]
-			files = dir.list_files(char)
-			
-			answer_value = indexOf(DATASET_CHARS, char.upper())
-			
-			data_arr = []
-			
-			for file in files:
-				
-				# Получаем изображение
-				image = dir.read_file( os.path.join(char, file) )
-				
-				x, y = CharsNetwork.get_train_tensor(image, answer_value)
-				
-				data_arr.append((x, y))
-				
-				del x, y
-			
-			# Разделяем данные на обучающие и тестовые
-			# В датасете будет одинаковы процент тестовых данных для каждой буквы
-			train, test = train_test_split(data_arr, test_size=test_size)
-			
-			for item in train:
-				train_x = torch.cat((train_x, item[0][None,:]))
-				train_y = torch.cat((train_y, item[1][None,:]))
-			
-			for item in test:
-				test_x = torch.cat((test_x, item[0][None,:]))
-				test_y = torch.cat((test_y, item[1][None,:]))
-			
-			#break
-			
 		train_dataset = TensorDataset( train_x, train_y )
-		test_dataset = TensorDataset( test_x, test_y )
+		test_dataset = cls.get_control_dataset( round(train_x.shape[0] * test_size) )
 		
 		return train_dataset, test_dataset
 	
 	
-	def get_control_dataset(cls):
+	def get_control_dataset(cls, count = 1000):
 		
 		"""
 		Возвращает нормализованный контрольный датасет
 		"""
-		
-		count = 1000
 		
 		data_x = torch.tensor([])
 		data_y = torch.tensor([])
@@ -261,8 +227,8 @@ class CharsNetwork(AbstractNetwork):
 			
 			x, y = CharsNetwork.get_train_tensor(image, answer_value)
 			
-			data_x = torch.cat((data_x, x[None,:]))
-			data_y = torch.cat((data_y, y[None,:]))
+			data_x = torch.cat( (data_x, x[None,:]) )
+			data_y = torch.cat( (data_y, y[None,:]) )
 			
 			del x, y
 			
@@ -316,6 +282,9 @@ class CharsNetwork(AbstractNetwork):
 		dir = Directory()
 		dir.open( "data", "chars" )
 		
+		train_x = torch.tensor([])
+		train_y = torch.tensor([])
+		
 		text_str_count = len(DATASET_CHARS_EX)
 		
 		angles = [-45,-35,-25,-10,0,10,25,35,45];
@@ -348,10 +317,18 @@ class CharsNetwork(AbstractNetwork):
 							file_name
 						)
 						
+						answer_value = indexOf(DATASET_CHARS, char.upper())
+						x, y = CharsNetwork.get_train_tensor(image, answer_value)
+						
+						train_x = torch.cat( (train_x, x[None,:]) )
+						data_y = torch.cat( (train_y, y[None,:]) )
+						
 						dir.save_file(file_name + ".png", image)
 						
 					pass
 			
+		obj = {'x': train_x, 'y': train_y}
+		torch.save(obj, "data/chars.data")
 		
 		dir.close()
 	
