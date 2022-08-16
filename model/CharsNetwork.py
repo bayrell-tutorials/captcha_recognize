@@ -122,6 +122,9 @@ class CharsNetwork(AbstractNetwork):
 				return x
 		
 		self.model = Model(self)
+		
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=3e-4)
+		
 		"""
 		self.model = nn.Sequential(
 			nn.Linear(784, 128),
@@ -166,16 +169,16 @@ class CharsNetwork(AbstractNetwork):
 		accuracy_train = kwargs["accuracy_train"]
 		accuracy_test = kwargs["accuracy_test"]
 		
-		if epoch_number >= 50:
+		if epoch_number >= 25:
 			self.stop_training()
 		
-		if accuracy_train > 0.95:
+		if accuracy_train > 0.95 and epoch_number >= 30:
 			self.stop_training()
 		
-		if accuracy_test > 0.95:
+		if accuracy_test > 0.95 and epoch_number >= 30:
 			self.stop_training()
 		
-		if loss_test < 0.005 and epoch_number >= 5:
+		if loss_test < 0.005 and epoch_number >= 50:
 			self.stop_training()
 	
 	
@@ -189,7 +192,7 @@ class CharsNetwork(AbstractNetwork):
 		Возвращает нормализованные обучающие датасеты
 		"""
 		
-		obj = torch.load("data/chars.data")
+		obj = torch.load("data/chars_training.data")
 		train_x = obj["x"]
 		train_y = obj["y"]
 		
@@ -328,7 +331,7 @@ class CharsNetwork(AbstractNetwork):
 					pass
 			
 		obj = {'x': train_x, 'y': train_y}
-		torch.save(obj, "data/chars.data")
+		torch.save(obj, "data/chars_training.data")
 		
 		dir.close()
 	

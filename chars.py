@@ -41,6 +41,8 @@ def train_net(net:CharsNetwork):
 	Обучение модели
 	"""
 	
+	# Загрузить сеть с диска
+	#net.load()
 	net._is_trained = False
 	
 	# Если модель обучена
@@ -62,6 +64,9 @@ def control_net(net:CharsNetwork):
 	Проверка модели
 	"""
 	
+	# Загрузить сеть с диска
+	net.load()
+	
 	# Если модель обучена
 	if net.is_loaded():
 	
@@ -80,9 +85,6 @@ if __name__ == '__main__':
 	# Создать модель
 	net.create_model()
 	net.summary()
-	
-	# Загрузить сеть с диска
-	net.load()
 	
 	#create_dataset()
 	#check_net(net)
