@@ -5,26 +5,18 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "dataset_create",
+			"name": "chars",
 			"type": "python",
 			"request": "launch",
-			"program": "${workspaceFolder}/dataset.py",
+			"program": "${workspaceFolder}/chars.py",
 			"console": "integratedTerminal",
 			"justMyCode": true
 		},
 		{
-			"name": "train_chars",
+			"name": "captcha",
 			"type": "python",
 			"request": "launch",
-			"program": "${workspaceFolder}/train_chars.py",
-			"console": "integratedTerminal",
-			"justMyCode": true
-		},
-		{
-			"name": "train_captcha",
-			"type": "python",
-			"request": "launch",
-			"program": "${workspaceFolder}/train_captcha.py",
+			"program": "${workspaceFolder}/captcha.py",
 			"console": "integratedTerminal",
 			"justMyCode": true
 		},

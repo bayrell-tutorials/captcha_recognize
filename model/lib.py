@@ -9,7 +9,7 @@
 import os, random
 
 from ai_helper import *
-from .ModelKeras1 import ModelKeras1
+from .CharsNetwork import CharsNetwork
 #from .ModelTorch1 import ModelTorch1
 
 
@@ -22,8 +22,7 @@ DATASET_CHARS_EX_COUNT = len(DATASET_CHARS_EX)
 
 # Known models
 model_list = [
-	ModelKeras1(),
-	#ModelTorch1(),
+	CharsNetwork(),
 ]
 
 
