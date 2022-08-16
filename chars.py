@@ -43,7 +43,7 @@ def train_net(net:CharsNetwork):
 	"""
 	
 	# Загрузить сеть с диска
-	net.load()
+	#net.load()
 	net._is_trained = False
 	
 	# Если модель обучена

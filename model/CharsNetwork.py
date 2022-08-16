@@ -141,7 +141,7 @@ class CharsNetwork(AbstractNetwork):
 		
 		if (predict != y) and (type == "control"):
 			title = DATASET_CHARS[predict] + " | " + DATASET_CHARS[y]
-			#print (title)
+			print (title)
 			tensor_x = kwargs["tensor_x"]
 			tensor_x = tensor_x * 255
 			#plot_show_image( tensor_x.tolist(), cmap="gray" )

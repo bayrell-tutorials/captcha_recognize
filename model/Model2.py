@@ -90,9 +90,11 @@ class Model2(CharsNetwork):
 				x = x.view(-1, 4096)
 				self.net.print_debug("Line:", x.shape)
 				
-				# Выход: 4096
+				# Выход: 4096 => 256 => 36
 				
-				# Полносвязный слои
+				x = self.drop50(x)
+				
+				# Полносвязный слой
 				x = F.relu(self.fc1(x))
 				x = self.drop50(x)
 				x = self.fc2(x)
@@ -107,8 +109,8 @@ class Model2(CharsNetwork):
 		
 		self.model = Model(self)
 		
-		#self.optimizer = torch.optim.Adam(self.model.parameters(), lr=3e-4, betas=(0.9, 0.99))
-		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+		self.optimizer = torch.optim.Adam(self.model.parameters(), lr=3e-4)
+		#self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
 		self.loss = nn.CrossEntropyLoss()
 		
 	
