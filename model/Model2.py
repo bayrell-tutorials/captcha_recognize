@@ -20,7 +20,7 @@ class Model2(CharsNetwork):
 		Название модели
 		"""
 		
-		return os.path.join("data", "model", "chars", "2")
+		return os.path.join("data", "model", "chars", "3")
 	
 	
 	def create_model(self):

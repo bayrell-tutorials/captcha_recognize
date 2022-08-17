@@ -114,10 +114,10 @@ def get_train_vector_chars(image, char_number):
 		Возвращает обучающий вектор (x, y) по изображению image и его номеру char_number
 	"""
 	
-	question_vector = image_to_vector(image)
+	question_vector = image_to_tensor(image)
 	question_vector = question_vector.astype('float32') / 255.0
 	
-	answer_vector = get_answer_vector_by_number(char_number, DATASET_CHARS_COUNT)
+	answer_vector = get_vector_from_answer(DATASET_CHARS_COUNT)(char_number)
 	
 	return question_vector, answer_vector
 	
@@ -216,6 +216,6 @@ def image_char_normalize(image, size=(32,32)):
 		return None
 		
 	image = image.crop( box )
-	image = image_resize_canvas(image, size)
+	image = resize_image_canvas(image, size)
 	
 	return image

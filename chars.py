@@ -54,7 +54,9 @@ def train_net(net:CharsNetwork):
 		
 		# Обучить сеть
 		net.train()
-		net.train_show_history()
+		
+		# Показать историю
+		net.show_train_history()
 		
 		# Сохранить сеть на диск
 		net.save()

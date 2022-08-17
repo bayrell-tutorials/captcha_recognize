@@ -141,7 +141,7 @@ class CharsNetwork(AbstractNetwork):
 		
 		if (predict != y) and (type == "control"):
 			title = DATASET_CHARS[predict] + " | " + DATASET_CHARS[y]
-			print (title)
+			#print (title)
 			tensor_x = kwargs["tensor_x"]
 			tensor_x = tensor_x * 255
 			#plot_show_image( tensor_x.tolist(), cmap="gray" )
@@ -151,23 +151,23 @@ class CharsNetwork(AbstractNetwork):
 	
 	
 	
-	def train_epoch_callback(self, **kwargs):
+	def on_end_epoch(self):
 		"""
 		Train epoch callback
 		"""
 		
-		epoch_number = kwargs["epoch_number"]
-		loss_test = kwargs["loss_test"]
-		accuracy_train = kwargs["accuracy_train"]
-		accuracy_test = kwargs["accuracy_test"]
+		epoch_number = self.train_status.epoch_number
+		loss_test = self.train_status.loss_test
+		acc_train = self.train_status.acc_train
+		acc_test = self.train_status.acc_test
 		
 		if epoch_number >= 25:
 			self.stop_training()
 		
-		if accuracy_train > 0.95 and epoch_number >= 30:
+		if acc_train > 0.95 and epoch_number >= 30:
 			self.stop_training()
 		
-		if accuracy_test > 0.95 and epoch_number >= 30:
+		if acc_test > 0.95 and epoch_number >= 30:
 			self.stop_training()
 		
 		if loss_test < 0.005 and epoch_number >= 50:
@@ -208,7 +208,7 @@ class CharsNetwork(AbstractNetwork):
 			char_number = random.randint(0, DATASET_CHARS_EX_COUNT - 1)
 			char = DATASET_CHARS_EX[ char_number ]
 			
-			answer_value = indexOf(DATASET_CHARS, char.upper())
+			answer_value = index_of(DATASET_CHARS, char.upper())
 			
 			angle = random.randint(-50, 50)
 			font_size = random.randint(28, 36)
@@ -312,7 +312,7 @@ class CharsNetwork(AbstractNetwork):
 							file_name
 						)
 						
-						answer_value = indexOf(DATASET_CHARS, char.upper())
+						answer_value = index_of(DATASET_CHARS, char.upper())
 						x, y = CharsNetwork.get_train_tensor(image, answer_value)
 						
 						train_x = torch.cat( (train_x, x[None,:]) )
@@ -408,7 +408,7 @@ class CharsNetwork(AbstractNetwork):
 		return (left, top, right, bottom)
 		
 		
-	def char_image_normalize(image, size=(32,32)):
+	def normalize_char_image(image, size=(32,32)):
 		
 		"""
 		Находит символ, убирает лишнее побокам пространство,
@@ -421,6 +421,6 @@ class CharsNetwork(AbstractNetwork):
 			return None
 			
 		image = image.crop( box )
-		image = image_resize_canvas(image, size)
+		image = resize_image_canvas(image, size)
 		
 		return image
